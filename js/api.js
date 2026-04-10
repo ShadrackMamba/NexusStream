@@ -3,7 +3,7 @@
 // ============================================================
 
 const API = (() => {
-  const API_KEY = ''; // 
+  const API_KEY = import.meta.env.YOUTUBE_API_KEY;
   const BASE = 'https://www.googleapis.com/youtube/v3';
 
   // Mock data for demo mode (when no API key)
