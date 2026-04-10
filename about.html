@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>About — NexusStream</title>
+  <link rel="stylesheet" href="assets/css/global.css" />
+  <style>
+    .about-hero {
+      position:relative;
+      min-height:50vh;
+      display:flex; align-items:center; justify-content:center;
+      text-align:center;
+      overflow:hidden;
+      padding:80px 24px;
+    }
+    .about-hero__bg {
+      position:absolute; inset:0;
+      background:
+        radial-gradient(ellipse at 50% 50%, rgba(0,240,255,0.06) 0%, transparent 60%),
+        radial-gradient(ellipse at 20% 80%, rgba(255,0,212,0.04) 0%, transparent 40%);
+    }
+    .about-hero__grid {
+      position:absolute; inset:0;
+      background-image:
+        linear-gradient(rgba(0,240,255,0.04) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(0,240,255,0.04) 1px, transparent 1px);
+      background-size:60px 60px;
+      mask-image:radial-gradient(ellipse at center, black 30%, transparent 70%);
+    }
+    .about-hero__content { position:relative; z-index:1; max-width:700px; }
+    .about-hero__eyebrow {
+      font-family:var(--font-mono);
+      font-size:0.65rem; letter-spacing:0.3em; text-transform:uppercase;
+      color:var(--cyan); opacity:0.7; margin-bottom:20px;
+    }
+    .about-hero__title {
+      font-family:var(--font-display);
+      font-size:clamp(2rem, 5vw, 4rem);
+      font-weight:900; line-height:1.05;
+      letter-spacing:0.04em; text-transform:uppercase;
+      color:#fff;
+      text-shadow:0 0 60px rgba(0,240,255,0.2);
+      margin-bottom:24px;
+    }
+    .about-hero__title span { color:var(--cyan); }
+    .about-hero__sub {
+      font-size:1rem; line-height:1.7;
+      color:var(--text-dim); max-width:560px; margin:0 auto;
+    }
+
+    /* ── Sections ── */
+    .about-sections { max-width:1000px; margin:0 auto; padding:0 24px 80px; }
+    .about-block {
+      padding:48px 0;
+      border-bottom:1px solid rgba(0,240,255,0.06);
+    }
+    .about-block__title {
+      font-family:var(--font-display);
+      font-size:0.7rem; font-weight:700;
+      letter-spacing:0.15em; text-transform:uppercase;
+      color:var(--cyan); margin-bottom:20px;
+    }
+    .about-block__body {
+      font-size:0.95rem; line-height:1.75;
+      color:var(--text-dim);
+    }
+    .about-block__body p { margin-bottom:16px; }
+
+    /* ── Creator Brand ── */
+    .brand-card {
+        display: flex; align-items: center; gap: 30px;
+        background: var(--surface); border: var(--border);
+        padding: 32px; border-radius: var(--radius-lg); margin-top: 24px;
+    }
+    .brand-logo {
+        width: 100px; height: 100px; border-radius: var(--radius);
+        border: 1px solid var(--cyan); box-shadow: 0 0 15px rgba(0,240,255,0.1);
+        object-fit: cover;
+    }
+    .brand-info h3 {
+        font-family: var(--font-display); color: #fff;
+        font-size: 1.2rem; margin-bottom: 8px; letter-spacing: 0.05em;
+    }
+    .brand-links { display: flex; gap: 12px; margin-top: 16px; }
+    .brand-link {
+        font-family: var(--font-mono); font-size: 0.65rem;
+        color: var(--cyan); text-decoration: none;
+        padding: 6px 12px; border: 1px solid rgba(0,240,255,0.2);
+        border-radius: var(--radius); transition: 0.3s;
+    }
+    .brand-link:hover { background: rgba(0,240,255,0.1); border-color: var(--cyan); }
+
+    /* ── Tech stack ── */
+    .tech-grid {
+      display:grid; grid-template-columns:repeat(auto-fill, minmax(200px, 1fr));
+      gap:16px; margin-top:24px;
+    }
+    .tech-card {
+      padding:20px; background:var(--surface); border:var(--border);
+      border-radius:var(--radius); text-align:center; transition:all 0.25s;
+    }
+    .tech-card:hover { border-color:rgba(0,240,255,0.4); transform:translateY(-3px); }
+    .tech-card__icon { font-size:2rem; margin-bottom:10px; }
+    .tech-card__name {
+      font-family:var(--font-display); font-size:0.7rem; font-weight:700;
+      letter-spacing:0.1em; color:var(--cyan); margin-bottom:6px;
+    }
+    .tech-card__desc { font-size:0.72rem; color:var(--text-dim); line-height:1.5; }
+
+    @media(max-width:600px) { .brand-card { flex-direction: column; text-align: center; } }
+  </style>
+</head>
+<body>
+
+<div class="ns-loader" id="ns-loader">
+  <div class="ns-loader__ring"></div>
+  <div class="ns-loader__text">LOADING NEXUS DATA</div>
+  <div class="ns-loader__bar"><div class="ns-loader__bar-fill" id="loader-bar"></div></div>
+</div>
+
+<header id="ns-header">
+  <div class="ns-header__inner">
+    <a href="index.html" class="ns-logo">NEXUS<span>STREAM</span></a>
+    <nav class="ns-nav">
+      <a href="index.html" data-page="index.html">Home</a>
+      <a href="explore.html" data-page="explore.html">Explore</a>
+      <a href="about.html" data-page="about.html">About</a>
+    </nav>
+    <button class="ns-header__search-btn" onclick="UI.pageTransition('search.html')">
+      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+      SEARCH
+    </button>
+  </div>
+</header>
+
+<main class="ns-page">
+
+  <div class="about-hero">
+    <div class="about-hero__bg"></div>
+    <div class="about-hero__grid"></div>
+    <div class="about-hero__content" id="aboutHero">
+      <div class="about-hero__eyebrow">◈ SYSTEM SPECIFICATION ◈</div>
+      <h1 class="about-hero__title">DESIGN <span>ENGINE</span></h1>
+      <p class="about-hero__sub">
+        NexusStream is a high-fidelity YouTube clone. It represents a shift from standard web layouts toward a reactive, holographic interface designed for deep media immersion.
+      </p>
+    </div>
+  </div>
+
+  <div class="about-sections">
+
+    <div class="about-block">
+      <div class="about-block__title">◈ AESTHETIC ARCHITECTURE</div>
+      <div class="about-block__body">
+        <p>The visual identity of NexusStream is rooted in cyberpunk functionalism. We utilize glass-morphism and high-frequency scan lines to simulate a terminal interface from the near future.</p>
+        <p>Every element is reactive; the design isn't just a container for content, but a part of the content experience itself, built to mimic an advanced operating system.</p>
+      </div>
+    </div>
+
+    <div class="about-block">
+      <div class="about-block__title">◈ THE CLONE PROTOCOL</div>
+      <div class="about-block__body">
+        <p>By interfacing with the YouTube Data API v3, NexusStream mirrors the world's largest video library while stripping away traditional web clutter in favor of a curated, cinematic viewing environment.</p>
+      </div>
+    </div>
+
+    <div class="about-block">
+      <div class="about-block__title">◈ CREATOR BRAND</div>
+      <div class="brand-card">
+        <img src="assets/img/webshak-logo.png" alt="Webshak" class="brand-logo">
+        <div class="brand-info">
+            <h3>WEBSHAK</h3>
+            <p class="about-block__body">A digital laboratory focused on bleeding-edge UI design and functional software art.</p>
+            <div class="brand-links">
+                <a href="#" class="brand-link">WEBSITE</a>
+                <a href="mailto:contact@webshak.io" class="brand-link">CONTACT</a>
+                <a href="#" class="brand-link">GITHUB</a>
+            </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="about-block">
+      <div class="about-block__title">◈ TECH STACK</div>
+      <div class="tech-grid" id="techGrid"></div>
+    </div>
+
+  </div>
+</main>
+
+<footer id="ns-footer">
+  <div class="ns-footer__brand">NEXUS<span style="color:var(--magenta)">STREAM</span></div>
+  <div class="ns-footer__links">
+    <a href="index.html">Home</a><a href="explore.html">Explore</a><a href="search.html">Search</a>
+  </div>
+  <div class="ns-footer__attr">Powered by YouTube Data API v3 · NexusStream © 2085</div>
+</footer>
+
+<script src="js/api.js"></script>
+<script src="js/ui.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+  const loader = document.getElementById('ns-loader');
+  const bar = document.getElementById('loader-bar');
+  setTimeout(() => bar.style.width='100%', 100);
+  setTimeout(() => { loader.classList.add('hidden'); setTimeout(()=>loader.remove(),500); }, 1100);
+
+  // Tech stack items
+  const stack = [
+    { icon:'🌐', name:'Vanilla JS', desc:'Zero framework overhead — pure DOM mastery' },
+    { icon:'🎨', name:'CSS3', desc:'Custom properties, animations, and glass morphism' },
+    { icon:'📡', name:'YouTube API', desc:'Real-time video data and search integration' },
+    { icon:'✦', name:'Hologram Engine', desc:'Reactive UI with particle and scan line effects' }
+  ];
+  const grid = document.getElementById('techGrid');
+  stack.forEach((t, i) => {
+    const card = document.createElement('div');
+    card.className = 'tech-card';
+    card.innerHTML = `<div class="tech-card__icon">${t.icon}</div><div class="tech-card__name">${t.name}</div><div class="tech-card__desc">${t.desc}</div>`;
+    grid.appendChild(card);
+    if(typeof UI !== 'undefined') UI.buildCardEffect(card, 400 + i * 80);
+  });
+
+  if (typeof UI !== 'undefined') {
+    UI.createParticleField(document.querySelector('.about-hero'), 30);
+    document.querySelectorAll('.about-block, .about-hero__content').forEach((el, i) => {
+      UI.buildCardEffect(el, i * 100);
+    });
+  }
+});
+</script>
+</body>
+</html>

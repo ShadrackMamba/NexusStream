@@ -1,0 +1,303 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Neural Search — NexusStream</title>
+  <link rel="stylesheet" href="assets/css/global.css" />
+  <style>
+    .search-universe {
+      min-height:100vh;
+      display:flex; flex-direction:column;
+      align-items:center;
+      padding-top:120px;
+    }
+
+    /* ── Central search node ── */
+    .search-node {
+      position:relative;
+      display:flex; flex-direction:column;
+      align-items:center; gap:32px;
+      width:100%; max-width:680px;
+      margin-bottom:64px;
+    }
+    .search-node__title {
+      font-family:var(--font-display);
+      font-size:0.7rem; letter-spacing:0.3em; text-transform:uppercase;
+      color:var(--cyan); opacity:0.7;
+    }
+    .search-node__rings {
+      position:absolute; top:50%; left:50%;
+      transform:translate(-50%,-50%);
+      pointer-events:none;
+    }
+    .search-ring {
+      position:absolute;
+      border-radius:50%;
+      border:1px solid rgba(0,240,255,0.08);
+      transform:translate(-50%,-50%);
+      animation:energyPulse 3s ease-in-out infinite;
+    }
+    .search-ring:nth-child(1) { width:400px; height:400px; animation-delay:0s; }
+    .search-ring:nth-child(2) { width:600px; height:600px; animation-delay:0.5s; border-color:rgba(0,240,255,0.05); }
+    .search-ring:nth-child(3) { width:800px; height:800px; animation-delay:1s; border-color:rgba(0,240,255,0.03); }
+    .search-ring.pulse {
+      border-color:rgba(0,240,255,0.3) !important;
+      animation:expandRing 0.8s ease-out forwards;
+    }
+    @keyframes expandRing {
+      from { transform:translate(-50%,-50%) scale(0.3); opacity:1; }
+      to   { transform:translate(-50%,-50%) scale(1.5); opacity:0; }
+    }
+
+    .search-input-wrap {
+      position:relative; z-index:2;
+      width:100%;
+      transition:transform 0.1s ease;
+    }
+    .search-input-inner {
+      display:flex; align-items:center;
+      background:rgba(4,15,24,0.9);
+      border:1px solid rgba(0,240,255,0.3);
+      border-radius:var(--radius);
+      padding:0 20px;
+      box-shadow:0 0 30px rgba(0,240,255,0.1), inset 0 0 20px rgba(0,240,255,0.03);
+      transition:all 0.3s;
+    }
+    .search-input-inner:focus-within {
+      border-color:rgba(0,240,255,0.7);
+      box-shadow:0 0 50px rgba(0,240,255,0.2), inset 0 0 30px rgba(0,240,255,0.05);
+    }
+    .search-icon {
+      color:var(--cyan); opacity:0.6; flex-shrink:0; margin-right:14px;
+    }
+    #searchInput {
+      flex:1; background:transparent; border:none; outline:none;
+      font-family:var(--font-mono);
+      font-size:1rem; color:var(--text);
+      padding:18px 0;
+      letter-spacing:0.03em;
+    }
+    #searchInput::placeholder { color:rgba(0,240,255,0.3); }
+    .search-submit {
+      flex-shrink:0;
+      padding:10px 20px;
+      font-family:var(--font-display);
+      font-size:0.65rem; font-weight:700;
+      letter-spacing:0.1em; text-transform:uppercase;
+      color:var(--cyan);
+      border:1px solid rgba(0,240,255,0.3);
+      border-radius:var(--radius);
+      background:var(--cyan-dim);
+      transition:all 0.2s;
+    }
+    .search-submit:hover {
+      background:rgba(0,240,255,0.25);
+      box-shadow:0 0 20px rgba(0,240,255,0.2);
+    }
+
+    /* ── Suggestions ── */
+    .search-suggestions {
+      display:flex; gap:8px; flex-wrap:wrap; justify-content:center;
+    }
+    .search-sugg {
+      padding:5px 14px;
+      font-size:0.72rem; font-family:var(--font-mono);
+      border:var(--border); border-radius:20px;
+      color:var(--text-dim); cursor:pointer;
+      transition:all 0.2s;
+    }
+    .search-sugg:hover {
+      color:var(--cyan); border-color:rgba(0,240,255,0.4);
+      background:var(--cyan-dim);
+    }
+
+    /* ── Results ── */
+    .results-area { width:100%; max-width:1200px; padding:0 24px 80px; }
+    .results-header {
+      font-family:var(--font-mono);
+      font-size:0.72rem; color:var(--text-dim);
+      margin-bottom:24px;
+      display:flex; justify-content:space-between; align-items:center;
+    }
+    .results-header span { color:var(--cyan); }
+    .results-empty {
+      text-align:center; padding:80px 0;
+      color:var(--text-dim);
+      font-family:var(--font-mono); font-size:0.8rem;
+    }
+    .results-empty h3 {
+      font-family:var(--font-display);
+      font-size:1.5rem; color:var(--cyan);
+      margin-bottom:12px; opacity:0.5;
+    }
+  </style>
+</head>
+<body>
+<div class="ns-loader" id="ns-loader">
+  <div class="ns-loader__ring"></div>
+  <div class="ns-loader__text">NEURAL SEARCH READY</div>
+  <div class="ns-loader__bar"><div class="ns-loader__bar-fill" id="loader-bar"></div></div>
+</div>
+
+<header id="ns-header">
+  <div class="ns-header__inner">
+    <a href="index.html" class="ns-logo">NEXUS<span>STREAM</span></a>
+    <nav class="ns-nav">
+      <a href="index.html" data-page="index.html">Home</a>
+      <a href="explore.html" data-page="explore.html">Explore</a>
+      <a href="search.html" data-page="search.html">Search</a>
+      <a href="about.html" data-page="about.html">About</a>
+    </nav>
+  </div>
+</header>
+
+<main class="ns-page">
+  <div class="search-universe">
+
+    <div class="search-node">
+      <div class="search-node__title">◈ Neural Search Interface ◈</div>
+      <div class="search-node__rings">
+        <div class="search-ring"></div>
+        <div class="search-ring"></div>
+        <div class="search-ring"></div>
+      </div>
+
+      <div class="search-input-wrap" id="searchInputWrap">
+        <div class="search-input-inner">
+          <svg class="search-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+          <input id="searchInput" type="text" placeholder="SEARCH THE VIDEO UNIVERSE..." autocomplete="off" />
+          <button class="search-submit" id="searchBtn">SCAN</button>
+        </div>
+      </div>
+
+      <div class="search-suggestions" id="suggestions">
+        <span class="search-sugg" data-q="AI future">AI future</span>
+        <span class="search-sugg" data-q="quantum computing">quantum computing</span>
+        <span class="search-sugg" data-q="gaming">gaming</span>
+        <span class="search-sugg" data-q="machine learning">machine learning</span>
+        <span class="search-sugg" data-q="space">space</span>
+        <span class="search-sugg" data-q="neural networks">neural networks</span>
+      </div>
+    </div>
+
+    <div class="results-area" id="resultsArea">
+      <div class="results-empty">
+        <h3>◈</h3>
+        <p>Enter a query to scan the video universe</p>
+      </div>
+    </div>
+  </div>
+</main>
+
+<footer id="ns-footer">
+  <div class="ns-footer__brand">NEXUS<span style="color:var(--magenta)">STREAM</span></div>
+  <div class="ns-footer__links">
+    <a href="index.html">Home</a><a href="explore.html">Explore</a>
+  </div>
+  <div class="ns-footer__attr">Powered by YouTube Data API v3</div>
+</footer>
+
+<script src="js/api.js"></script>
+<script src="js/ui.js"></script>
+<script>
+(async () => {
+  // Loader
+  const loader = document.getElementById('ns-loader');
+  const bar = document.getElementById('loader-bar');
+  setTimeout(() => bar.style.width='100%', 100);
+  setTimeout(() => { loader.classList.add('hidden'); setTimeout(()=>loader.remove(),500); }, 1200);
+
+  const input = document.getElementById('searchInput');
+  const wrap  = document.getElementById('searchInputWrap');
+  const btn   = document.getElementById('searchBtn');
+  const area  = document.getElementById('resultsArea');
+  const rings = document.querySelector('.search-node__rings');
+
+  // URL param
+  const urlQ = new URLSearchParams(location.search).get('q');
+  if (urlQ) { input.value = urlQ; doSearch(urlQ); }
+
+  // Wave distortion on typing
+  input.addEventListener('input', () => {
+    UI.startSearchWave(wrap);
+    clearTimeout(input._debounce);
+    input._debounce = setTimeout(() => {
+      UI.stopSearchWave(wrap);
+      if (input.value.trim().length > 2) doSearch(input.value.trim());
+    }, 600);
+    pulseRings();
+  });
+
+  input.addEventListener('keydown', e => {
+    if (e.key === 'Enter') doSearch(input.value.trim());
+  });
+  btn.addEventListener('click', () => doSearch(input.value.trim()));
+
+  document.querySelectorAll('.search-sugg').forEach(s => {
+    s.addEventListener('click', () => {
+      input.value = s.dataset.q;
+      doSearch(s.dataset.q);
+    });
+  });
+
+  function pulseRings() {
+    const ring = document.createElement('div');
+    ring.className = 'search-ring pulse';
+    rings.appendChild(ring);
+    setTimeout(() => ring.remove(), 800);
+  }
+
+  async function doSearch(q) {
+    if (!q) return;
+    history.replaceState(null, '', `?q=${encodeURIComponent(q)}`);
+    area.innerHTML = '';
+    // Build skeleton
+    const skels = UI.showSkeletonLoader(area, 'grid');
+    UI.buildCardsStaggered(skels, 0);
+    // Filter bar
+    const filters = document.createElement('div');
+    filters.className = 'ns-filters';
+    ['All', 'Gaming', 'Tech', 'Education', 'AI'].forEach((f, i) => {
+      const btn = document.createElement('button');
+      btn.className = 'ns-filter' + (i===0?' active':'');
+      btn.textContent = f;
+      btn.addEventListener('click', () => {
+        filters.querySelectorAll('.ns-filter').forEach(b=>b.classList.remove('active'));
+        btn.classList.add('active');
+        grid.querySelectorAll('.ns-card').forEach(card => {
+          const cat = card.querySelector('.ns-card__tag')?.textContent || '';
+          card.style.display = (f==='All' || cat.includes(f)) ? '' : 'none';
+        });
+      });
+      filters.appendChild(btn);
+    });
+
+    const { items } = await API.search(q, 12);
+
+    area.innerHTML = '';
+    if (!items.length) {
+      area.innerHTML = '<div class="results-empty"><h3>◈</h3><p>No signals detected for this query</p></div>';
+      return;
+    }
+
+    const header = document.createElement('div');
+    header.className = 'results-header';
+    header.innerHTML = `<div>SCAN RESULTS <span>${items.length} signals found</span> for "${q}"</div>`;
+    area.appendChild(header);
+    area.appendChild(filters);
+
+    const grid = document.createElement('div');
+    grid.className = 'ns-grid';
+    items.forEach((v, i) => {
+      const card = UI.renderVideoCard(v);
+      grid.appendChild(card);
+      UI.buildCardEffect(card, i * 60);
+    });
+    area.appendChild(grid);
+    pulseRings();
+  }
+})();
+</script>
+</body>
+</html>

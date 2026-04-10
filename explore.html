@@ -1,0 +1,288 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Explore Universe — NexusStream</title>
+  <link rel="stylesheet" href="assets/css/global.css" />
+  <style>
+    .universe-map {
+      position:relative;
+      min-height:calc(100vh - var(--header-h));
+      overflow:hidden;
+    }
+
+    /* ── Universe canvas ── */
+    .universe-bg {
+      position:absolute; inset:0;
+      background:radial-gradient(ellipse at 50% 40%, rgba(0,240,255,0.04) 0%, transparent 60%);
+    }
+
+    /* ── Node system ── */
+    .nodes-container {
+      position:relative;
+      width:100%; min-height:680px;
+      display:flex; align-items:center; justify-content:center;
+      padding:60px 24px;
+    }
+    .universe-core {
+      position:relative;
+      width:120px; height:120px;
+      flex-shrink:0;
+    }
+    .universe-core__ring {
+      position:absolute; inset:-20px;
+      border-radius:50%;
+      border:1px solid rgba(0,240,255,0.2);
+      animation:rotateRing 8s linear infinite;
+    }
+    .universe-core__ring:nth-child(2) { inset:-40px; border-color:rgba(0,240,255,0.1); animation-duration:12s; animation-direction:reverse; }
+    .universe-core__orb {
+      position:absolute; inset:0;
+      border-radius:50%;
+      background:radial-gradient(circle at 40% 40%, rgba(0,240,255,0.3), rgba(0,240,255,0.05));
+      border:1px solid rgba(0,240,255,0.4);
+      display:flex; align-items:center; justify-content:center;
+      font-family:var(--font-display);
+      font-size:0.55rem; letter-spacing:0.15em; text-transform:uppercase;
+      color:var(--cyan);
+      box-shadow:0 0 40px rgba(0,240,255,0.2);
+      cursor:default;
+    }
+    .universe-category-nodes {
+      position:absolute; inset:0;
+      display:flex; align-items:center; justify-content:center;
+    }
+    .cat-node {
+      position:absolute;
+      transition:transform 0.3s ease;
+    }
+    .cat-node__orb {
+      width:90px; height:90px;
+      border-radius:50%;
+      display:flex; flex-direction:column;
+      align-items:center; justify-content:center;
+      gap:4px;
+      cursor:pointer;
+      transition:all 0.3s ease;
+      position:relative;
+    }
+    .cat-node__orb::before {
+      content:'';
+      position:absolute; inset:-2px;
+      border-radius:50%;
+      border:1px solid var(--node-color, rgba(0,240,255,0.3));
+      animation:rotateRing 4s linear infinite;
+    }
+    .cat-node__orb::after {
+      content:'';
+      position:absolute; inset:-8px;
+      border-radius:50%;
+      border:1px dashed var(--node-color, rgba(0,240,255,0.1));
+      animation:rotateRing 8s linear infinite reverse;
+    }
+    .cat-node:hover .cat-node__orb {
+      transform:scale(1.15);
+      box-shadow:0 0 40px var(--node-glow, rgba(0,240,255,0.3));
+    }
+    .cat-node__icon { font-size:1.6rem; }
+    .cat-node__label {
+      font-family:var(--font-display);
+      font-size:0.5rem; font-weight:700;
+      letter-spacing:0.12em; text-transform:uppercase;
+      color:var(--node-color, var(--cyan));
+    }
+    .cat-node__count {
+      font-family:var(--font-mono);
+      font-size:0.55rem; color:var(--text-dim);
+    }
+
+    /* Orbit lines */
+    .orbit-line {
+      position:absolute;
+      height:1px;
+      background:linear-gradient(to right, rgba(0,240,255,0.2), transparent);
+      transform-origin:left center;
+      pointer-events:none;
+    }
+
+    /* ── Feed panel ── */
+    .feed-panel {
+      padding:0 24px 80px;
+      max-width:1440px; margin:0 auto;
+    }
+    .feed-header {
+      display:flex; align-items:center; justify-content:space-between;
+      margin-bottom:24px;
+    }
+    .feed-header h2 {
+      font-family:var(--font-display);
+      font-size:1.1rem; font-weight:700;
+      letter-spacing:0.08em; text-transform:uppercase;
+    }
+    .feed-transition {
+      transition:opacity 0.3s ease, transform 0.4s ease;
+    }
+    .feed-transition.out {
+      opacity:0; transform:translateY(10px);
+    }
+
+    /* Category colors */
+    .cat--gaming  { --node-color:rgba(255,107,0,0.7); --node-glow:rgba(255,107,0,0.3); background:radial-gradient(circle at 40% 40%, rgba(255,107,0,0.2), rgba(255,107,0,0.03)); border:1px solid rgba(255,107,0,0.2); }
+    .cat--tech    { --node-color:rgba(0,240,255,0.7); --node-glow:rgba(0,240,255,0.3); background:radial-gradient(circle at 40% 40%, rgba(0,240,255,0.15), rgba(0,240,255,0.03)); border:1px solid rgba(0,240,255,0.2); }
+    .cat--edu     { --node-color:rgba(0,255,157,0.7); --node-glow:rgba(0,255,157,0.3); background:radial-gradient(circle at 40% 40%, rgba(0,255,157,0.15), rgba(0,255,157,0.03)); border:1px solid rgba(0,255,157,0.2); }
+    .cat--ai      { --node-color:rgba(255,0,212,0.7); --node-glow:rgba(255,0,212,0.3); background:radial-gradient(circle at 40% 40%, rgba(255,0,212,0.15), rgba(255,0,212,0.03)); border:1px solid rgba(255,0,212,0.2); }
+    .cat--playlist{ --node-color:rgba(255,215,0,0.7); --node-glow:rgba(255,215,0,0.3); background:radial-gradient(circle at 40% 40%, rgba(255,215,0,0.15), rgba(255,215,0,0.03)); border:1px solid rgba(255,215,0,0.2); }
+  </style>
+</head>
+<body>
+<div class="ns-loader" id="ns-loader">
+  <div class="ns-loader__ring"></div>
+  <div class="ns-loader__text">MAPPING UNIVERSE</div>
+  <div class="ns-loader__bar"><div class="ns-loader__bar-fill" id="loader-bar"></div></div>
+</div>
+
+<header id="ns-header">
+  <div class="ns-header__inner">
+    <a href="index.html" class="ns-logo">NEXUS<span>STREAM</span></a>
+    <nav class="ns-nav">
+      <a href="index.html" data-page="index.html">Home</a>
+      <a href="explore.html" data-page="explore.html">Explore</a>
+      <a href="about.html" data-page="about.html">About</a>
+    </nav>
+    <button class="ns-header__search-btn" onclick="UI.pageTransition('search.html')">
+      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+      SEARCH
+    </button>
+  </div>
+</header>
+
+<main class="ns-page">
+  <div class="universe-map">
+    <div class="universe-bg"></div>
+    <div class="nodes-container">
+      <div style="position:relative;width:500px;height:500px;flex-shrink:0">
+        <!-- Core orb -->
+        <div style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);z-index:2">
+          <div class="universe-core">
+            <div class="universe-core__ring"></div>
+            <div class="universe-core__ring"></div>
+            <div class="universe-core__orb">NEXUS<br>STREAM</div>
+          </div>
+        </div>
+        <!-- Category nodes injected by JS -->
+        <div class="universe-category-nodes" id="catNodes"></div>
+      </div>
+    </div>
+
+    <!-- Feed area -->
+    <div class="feed-panel">
+      <div class="feed-header">
+        <h2 id="feedTitle" class="ns-glow-text">◈ SELECT A UNIVERSE NODE</h2>
+        <div class="ns-filters" id="feedFilters" style="margin:0"></div>
+      </div>
+      <div class="feed-transition ns-grid" id="feedGrid">
+        <div style="grid-column:1/-1;text-align:center;padding:60px 0;color:var(--text-dim);font-family:var(--font-mono);font-size:0.8rem">
+          Click a node above to dive into a category feed
+        </div>
+      </div>
+    </div>
+  </div>
+</main>
+
+<footer id="ns-footer">
+  <div class="ns-footer__brand">NEXUS<span style="color:var(--magenta)">STREAM</span></div>
+  <div class="ns-footer__links">
+    <a href="index.html">Home</a><a href="search.html">Search</a>
+  </div>
+  <div class="ns-footer__attr">Powered by YouTube Data API v3</div>
+</footer>
+
+<script src="js/api.js"></script>
+<script src="js/ui.js"></script>
+<script>
+(async () => {
+  const loader = document.getElementById('ns-loader');
+  const bar = document.getElementById('loader-bar');
+  setTimeout(() => bar.style.width='100%', 100);
+  setTimeout(() => { loader.classList.add('hidden'); setTimeout(()=>loader.remove(),500); }, 1400);
+
+  const { items: videos } = await API.getTrending(10);
+
+  const categories = [
+    { label:'Gaming',    icon:'🎮', filter:'Gaming',    cls:'gaming',  color:'#ff6b00', angle:0 },
+    { label:'Tech',      icon:'⚡', filter:'Tech',      cls:'tech',    color:'#00f0ff', angle:72 },
+    { label:'Education', icon:'🧠', filter:'Education', cls:'edu',     color:'#00ff9d', angle:144 },
+    { label:'AI / Future', icon:'◈', filter:'AI',       cls:'ai',      color:'#ff00d4', angle:216 },
+    { label:'Playlists', icon:'📂', filter:'all',       cls:'playlist',color:'#ffd700', angle:288 },
+  ];
+
+  const radius = 180;
+  const container = document.getElementById('catNodes');
+
+  categories.forEach((cat, i) => {
+    const rad = (cat.angle - 90) * Math.PI / 180;
+    const x = Math.cos(rad) * radius;
+    const y = Math.sin(rad) * radius;
+
+    const node = document.createElement('div');
+    node.className = 'cat-node';
+    node.style.cssText = `
+      left:calc(50% + ${x}px); top:calc(50% + ${y}px);
+      transform:translate(-50%,-50%);
+    `;
+    node.innerHTML = `
+      <div class="cat-node__orb cat--${cat.cls}">
+        <div class="cat-node__icon">${cat.icon}</div>
+        <div class="cat-node__label">${cat.label}</div>
+      </div>
+    `;
+
+    // Subtle orbit drift
+    let angle = cat.angle;
+    setInterval(() => {
+      angle += 0.08;
+      const r = (angle - 90) * Math.PI / 180;
+      const nx = Math.cos(r) * radius;
+      const ny = Math.sin(r) * radius;
+      node.style.left = `calc(50% + ${nx}px)`;
+      node.style.top  = `calc(50% + ${ny}px)`;
+    }, 50);
+
+    node.addEventListener('click', () => loadCategoryFeed(cat));
+    container.appendChild(node);
+    UI.buildCardEffect(node, i * 120);
+  });
+
+  function loadCategoryFeed(cat) {
+    const grid   = document.getElementById('feedGrid');
+    const title  = document.getElementById('feedTitle');
+
+    grid.classList.add('out');
+    setTimeout(() => {
+      grid.innerHTML = '';
+      grid.classList.remove('out');
+
+      title.textContent = `◈ ${cat.label.toUpperCase()} UNIVERSE`;
+      title.style.color = cat.color;
+
+      const filtered = cat.filter === 'all'
+        ? videos
+        : videos.filter(v => v.category === cat.filter);
+      const arr = filtered.length ? filtered : videos;
+
+      arr.forEach((v, i) => {
+        const card = UI.renderVideoCard(v);
+        grid.appendChild(card);
+        UI.buildCardEffect(card, i * 60);
+      });
+
+      grid.scrollIntoView({ behavior:'smooth', block:'start' });
+    }, 300);
+  }
+
+  UI.createParticleField(document.querySelector('.universe-map'), 50);
+})();
+</script>
+</body>
+</html>

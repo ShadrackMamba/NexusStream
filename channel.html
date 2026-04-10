@@ -1,0 +1,311 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Channel — NexusStream</title>
+  <link rel="stylesheet" href="assets/css/global.css" />
+  <style>
+    /* ── Banner ── */
+    .channel-banner {
+      position:relative; height:240px;
+      background-size:cover; background-position:center;
+      overflow:hidden;
+    }
+    .channel-banner::after {
+      content:'';
+      position:absolute; inset:0;
+      background:
+        linear-gradient(to bottom, transparent 40%, var(--void) 100%),
+        linear-gradient(to right, rgba(0,4,8,0.6), transparent 50%);
+    }
+    .channel-banner__scan {
+      position:absolute; inset:0;
+      background:repeating-linear-gradient(
+        0deg, transparent, transparent 3px,
+        rgba(0,240,255,0.015) 3px, rgba(0,240,255,0.015) 4px
+      );
+    }
+
+    /* ── Channel header ── */
+    .channel-header {
+      position:relative; z-index:1;
+      display:flex; align-items:flex-end; gap:24px;
+      padding:0 48px;
+      margin-top:-80px; margin-bottom:40px;
+    }
+    .channel-avatar-sphere {
+      position:relative; flex-shrink:0;
+      width:120px; height:120px;
+    }
+    .channel-avatar-sphere__ring {
+      position:absolute; inset:-12px;
+      border-radius:50%;
+      border:1px solid transparent;
+      border-top-color:var(--cyan);
+      border-right-color:var(--magenta);
+      animation:rotateRing 3s linear infinite;
+    }
+    .channel-avatar-sphere__ring2 {
+      position:absolute; inset:-24px;
+      border-radius:50%;
+      border:1px dashed rgba(0,240,255,0.2);
+      animation:rotateRing 6s linear infinite reverse;
+    }
+    .channel-avatar-sphere img {
+      width:100%; height:100%;
+      border-radius:50%;
+      object-fit:cover;
+      border:2px solid rgba(0,240,255,0.4);
+      box-shadow:0 0 40px rgba(0,240,255,0.3);
+    }
+    .channel-info { flex:1; }
+    .channel-info__name {
+      font-family:var(--font-display);
+      font-size:2rem; font-weight:900;
+      color:#fff;
+      text-shadow:0 0 30px rgba(0,240,255,0.2);
+      margin-bottom:8px;
+    }
+    .channel-stats {
+      display:flex; gap:20px; margin-bottom:16px;
+      font-family:var(--font-mono); font-size:0.72rem;
+    }
+    .channel-stat { color:var(--text-dim); }
+    .channel-stat span { color:var(--cyan); font-weight:600; }
+    .channel-info__desc {
+      font-size:0.82rem; color:var(--text-dim); line-height:1.6;
+      max-width:500px;
+    }
+    .channel-actions { display:flex; gap:10px; align-items:flex-end; padding-bottom:4px; }
+
+    /* ── Floating stats chips ── */
+    .stats-chips {
+      display:flex; gap:10px; flex-wrap:wrap;
+      padding:0 48px; margin-bottom:40px;
+    }
+    .stat-chip {
+      padding:8px 16px;
+      background:var(--surface);
+      border:var(--border);
+      border-radius:var(--radius);
+      font-family:var(--font-mono); font-size:0.7rem;
+      display:flex; align-items:center; gap:8px;
+      animation:pulseGlow 4s ease-in-out infinite;
+    }
+    .stat-chip__label { color:var(--text-dim); }
+    .stat-chip__value { color:var(--cyan); font-weight:600; }
+
+    /* ── Tabs ── */
+    .channel-tabs {
+      display:flex; gap:0;
+      padding:0 48px; margin-bottom:32px;
+      border-bottom:1px solid rgba(0,240,255,0.1);
+    }
+    .channel-tab {
+      padding:12px 24px;
+      font-family:var(--font-display);
+      font-size:0.7rem; font-weight:700;
+      letter-spacing:0.1em; text-transform:uppercase;
+      color:var(--text-dim);
+      border-bottom:2px solid transparent;
+      transition:all 0.2s; cursor:pointer;
+    }
+    .channel-tab:hover { color:var(--cyan); }
+    .channel-tab.active {
+      color:var(--cyan);
+      border-bottom-color:var(--cyan);
+      text-shadow:0 0 12px var(--cyan-glow);
+    }
+
+    /* ── Content ── */
+    .channel-content { padding:0 48px 80px; }
+    @media(max-width:768px) {
+      .channel-header { padding:0 16px; flex-wrap:wrap; }
+      .stats-chips, .channel-tabs, .channel-content { padding-left:16px; padding-right:16px; }
+      .channel-info__name { font-size:1.4rem; }
+    }
+  </style>
+</head>
+<body>
+<div class="ns-loader" id="ns-loader">
+  <div class="ns-loader__ring"></div>
+  <div class="ns-loader__text">LOADING CHANNEL</div>
+  <div class="ns-loader__bar"><div class="ns-loader__bar-fill" id="loader-bar"></div></div>
+</div>
+
+<header id="ns-header">
+  <div class="ns-header__inner">
+    <a href="index.html" class="ns-logo">NEXUS<span>STREAM</span></a>
+    <nav class="ns-nav">
+      <a href="index.html" data-page="index.html">Home</a>
+      <a href="explore.html" data-page="explore.html">Explore</a>
+    </nav>
+    <button class="ns-header__search-btn" onclick="UI.pageTransition('search.html')">
+      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+      SEARCH
+    </button>
+  </div>
+</header>
+
+<main class="ns-page">
+  <!-- Banner -->
+  <div class="channel-banner" id="channelBanner">
+    <div class="channel-banner__scan"></div>
+  </div>
+
+  <!-- Header -->
+  <div class="channel-header" id="channelHeader">
+    <div class="channel-avatar-sphere">
+      <div class="channel-avatar-sphere__ring"></div>
+      <div class="channel-avatar-sphere__ring2"></div>
+      <img id="channelAvatar" src="" alt="Channel" />
+    </div>
+    <div class="channel-info" id="channelInfo">
+      <div class="ns-skeleton"><div class="sk-line" style="width:300px;height:24px;margin-bottom:8px"></div><div class="sk-line" style="width:200px"></div></div>
+    </div>
+    <div class="channel-actions">
+      <button class="ns-btn ns-btn--primary">◈ SUBSCRIBE</button>
+      <button class="ns-btn ns-btn--ghost">⧉ SHARE</button>
+    </div>
+  </div>
+
+  <!-- Stats chips -->
+  <div class="stats-chips" id="statsChips"></div>
+
+  <!-- Tabs -->
+  <div class="channel-tabs">
+    <div class="channel-tab active" data-tab="uploads">Uploads</div>
+    <div class="channel-tab" data-tab="playlists">Playlists</div>
+    <div class="channel-tab" data-tab="about">About</div>
+  </div>
+
+  <!-- Content area -->
+  <div class="channel-content">
+    <div class="ns-grid" id="channelContent"></div>
+  </div>
+</main>
+
+<footer id="ns-footer">
+  <div class="ns-footer__brand">NEXUS<span style="color:var(--magenta)">STREAM</span></div>
+  <div class="ns-footer__links">
+    <a href="index.html">Home</a><a href="explore.html">Explore</a>
+  </div>
+  <div class="ns-footer__attr">Powered by YouTube Data API v3</div>
+</footer>
+
+<script src="js/api.js"></script>
+<script src="js/ui.js"></script>
+<script>
+(async () => {
+  const loader = document.getElementById('ns-loader');
+  const bar = document.getElementById('loader-bar');
+  setTimeout(() => bar.style.width='100%', 100);
+  setTimeout(() => { loader.classList.add('hidden'); setTimeout(()=>loader.remove(),500); }, 1300);
+
+  const params = new URLSearchParams(location.search);
+  const channelId = params.get('c') || 'ch1';
+
+  const ch = await API.getChannelData(channelId);
+  const { items: videos } = await API.getTrending(8);
+
+  // Banner
+  const banner = document.getElementById('channelBanner');
+  banner.style.backgroundImage = `url('${ch.banner || 'https://picsum.photos/seed/banner'+channelId+'/1200/300'}')`;
+
+  // Avatar
+  document.getElementById('channelAvatar').src = ch.avatar || `https://picsum.photos/seed/${channelId}/120/120`;
+
+  // Info
+  document.getElementById('channelInfo').innerHTML = `
+    <div class="channel-info__name">${ch.name}</div>
+    <div class="channel-stats">
+      <div class="channel-stat">Subscribers <span>${ch.subs}</span></div>
+      <div class="channel-stat">Videos <span>${ch.videoCount || '—'}</span></div>
+    </div>
+    <div class="channel-info__desc">${ch.description || 'A premier creator on NexusStream, delivering cutting-edge content to millions.'}</div>
+  `;
+
+  // Stats chips
+  const chips = [
+    { label:'SUBSCRIBERS', value:ch.subs },
+    { label:'TOTAL VIDEOS', value:ch.videoCount || '—' },
+    { label:'NEXUS RANK', value:'#' + (Math.floor(Math.random()*99)+1) },
+    { label:'SIGNAL STRENGTH', value:(85 + Math.floor(Math.random()*14)) + '%' },
+  ];
+  const chipsEl = document.getElementById('statsChips');
+  chips.forEach((chip, i) => {
+    const el = document.createElement('div');
+    el.className = 'stat-chip';
+    el.style.animationDelay = `${i * 0.5}s`;
+    el.innerHTML = `<span class="stat-chip__label">${chip.label}</span> <span class="stat-chip__value">${chip.value}</span>`;
+    chipsEl.appendChild(el);
+    UI.buildCardEffect(el, i * 80);
+  });
+
+  // Default tab content
+  loadUploads();
+
+  // Tab switching
+  document.querySelectorAll('.channel-tab').forEach(tab => {
+    tab.addEventListener('click', () => {
+      document.querySelectorAll('.channel-tab').forEach(t=>t.classList.remove('active'));
+      tab.classList.add('active');
+      const t = tab.dataset.tab;
+      if (t === 'uploads') loadUploads();
+      else if (t === 'playlists') loadPlaylists();
+      else if (t === 'about') loadAbout();
+    });
+  });
+
+  function loadUploads() {
+    const content = document.getElementById('channelContent');
+    content.innerHTML = '';
+    videos.forEach((v, i) => {
+      const card = UI.renderVideoCard(v);
+      content.appendChild(card);
+      UI.buildCardEffect(card, i * 60);
+    });
+  }
+
+  function loadPlaylists() {
+    const content = document.getElementById('channelContent');
+    content.innerHTML = '';
+    ['Gaming Highlights', 'Tech Deep Dives', 'AI Explained', 'Top 10s'].forEach((name, i) => {
+      const card = document.createElement('div');
+      card.className = 'ns-card';
+      card.style.cursor='pointer';
+      card.innerHTML = `
+        <div style="padding:24px;text-align:center">
+          <div style="font-size:2rem;margin-bottom:12px">📂</div>
+          <div style="font-family:var(--font-display);font-size:0.75rem;font-weight:700;color:var(--cyan);letter-spacing:0.08em;margin-bottom:8px">${name}</div>
+          <div style="font-size:0.7rem;color:var(--text-dim);font-family:var(--font-mono)">${4+i*3} videos</div>
+        </div>
+      `;
+      card.addEventListener('click', () => UI.pageTransition('playlist.html'));
+      content.appendChild(card);
+      UI.buildCardEffect(card, i * 80);
+    });
+  }
+
+  function loadAbout() {
+    const content = document.getElementById('channelContent');
+    content.style.display = 'block';
+    content.innerHTML = `
+      <div class="ns-panel" style="padding:32px;max-width:640px;grid-column:1/-1">
+        <div style="font-family:var(--font-display);font-size:0.7rem;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;color:var(--cyan);margin-bottom:16px">◈ ABOUT ${ch.name.toUpperCase()}</div>
+        <div style="font-size:0.88rem;line-height:1.7;color:var(--text-dim);margin-bottom:24px">${ch.description || 'Delivering next-generation content experiences to millions of viewers worldwide. This channel represents the cutting edge of digital media.'}</div>
+        <div style="display:flex;gap:16px;flex-wrap:wrap">
+          <div class="ns-badge ns-badge--cyan">Verified Creator</div>
+          <div class="ns-badge ns-badge--mag">Nexus Partner</div>
+          <div class="ns-badge ns-badge--gold">Top Channel</div>
+        </div>
+      </div>
+    `;
+    UI.buildCardEffect(content.firstChild, 100);
+    UI.scanEffect(content.firstChild, 600);
+  }
+})();
+</script>
+</body>
+</html>
